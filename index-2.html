@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#6f8b78">
+<title>SpeakEasy AAC</title>
+<style>
+:root{--bg:#f7f3ee;--panel:#fff;--ink:#292725;--muted:#746f6a;--accent:#6f8b78;--line:#ded8d1;--shadow:0 4px 14px rgba(50,45,40,.10)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}
+header{height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 12px}.brand{font-weight:850;font-size:19px}.spacer{flex:1}.topbtn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 11px;font-weight:750}.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+main{height:calc(100vh - 62px);display:flex;flex-direction:column}.toolbar{display:flex;gap:8px;align-items:center;padding:9px 12px 0}.boardSelect{padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:700;max-width:230px}.editOnly{display:none}.editing .editOnly{display:inline-flex}
+.message{margin:9px 12px 0;background:#fff;border:1px solid var(--line);border-radius:14px;min-height:65px;display:flex;align-items:center;padding:7px;box-shadow:var(--shadow)}#messageText{flex:1;font-size:25px;font-weight:750;padding:0 10px;white-space:nowrap;overflow:auto}.msgbtn{height:48px;border:0;border-radius:10px;margin-left:5px;padding:0 14px;font-weight:800}.speak{background:var(--accent);color:#fff}.clear{background:#eee8e2}
+.grid{padding:12px;display:grid;gap:10px;overflow:auto;flex:1;align-content:stretch}.aac{border:2px solid #d7d0c9;border-radius:15px;background:#fff;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:105px;position:relative;padding:7px;user-select:none;overflow:hidden}.aac:active{transform:scale(.985)}.pic{width:100%;height:68%;min-height:54px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px}.pic img{width:100%;height:100%;object-fit:cover}.emoji{font-size:42px}.label{font-size:18px;font-weight:850;text-align:center;line-height:1.05}.empty{border-style:dashed;box-shadow:none;color:#9b938b}.editbadge{display:none;position:absolute;right:5px;top:5px;background:rgba(35,35,35,.85);color:#fff;border-radius:7px;padding:3px 6px;font-size:10px;z-index:2}.editing .editbadge{display:block}.editing .aac{outline:2px dashed #9c9187;outline-offset:-5px}
+.modalWrap{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}.modal{background:#fff;width:min(520px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.25)}.modal h2{margin:0 0 14px}.field{margin:12px 0}.field label{display:block;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}.row{display:flex;gap:8px}.row>*{flex:1}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}.danger{background:#8b4742!important;color:#fff!important;border-color:#8b4742!important}.preview{width:150px;height:110px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f4f1ed;margin-top:8px}.preview img{width:100%;height:100%;object-fit:cover}.hint{font-size:12px;color:var(--muted);margin-top:5px}.notice{font-size:12px;color:var(--muted);padding:0 12px 8px}
+@media(max-width:700px){.brand{font-size:16px}.topbtn{padding:8px 9px}.toolbar{overflow-x:auto}.boardSelect{max-width:160px}.message{min-height:58px}#messageText{font-size:20px}.grid{gap:7px;padding:8px}.label{font-size:15px}.aac{min-height:90px}}
+</style></head>
+<body>
+<header><div class="brand">SpeakEasy AAC</div><div class="spacer"></div><button class="topbtn" id="editBtn">Staff / Edit</button><button class="topbtn" id="fullBtn">Full Screen</button></header>
+<main id="app">
+<div class="toolbar"><select id="boardSelect" class="boardSelect"></select><button class="topbtn editOnly" id="newBoard">+ Board</button><button class="topbtn editOnly" id="boardSettings">Board Settings</button><button class="topbtn editOnly" id="exportBtn">Export</button><button class="topbtn editOnly" id="importBtn">Import</button><input id="importFile" type="file" accept="application/json" hidden></div>
+<div class="message"><div id="messageText">Tap words to build a message…</div><button class="msgbtn clear" id="backBtn">⌫</button><button class="msgbtn clear" id="clearBtn">Clear</button><button class="msgbtn speak" id="speakBtn">▶ Speak</button></div>
+<div id="grid" class="grid"></div><div class="notice editOnly">Edits save on this device. Use Export/Import to move a customized board (including uploaded photos) to another RBT device.</div>
+</main>
+<div class="modalWrap" id="buttonModal"><div class="modal"><h2>Edit Button</h2>
+<div class="row"><div class="field"><label>Button label</label><input id="bLabel" placeholder="e.g., Goldfish"></div><div class="field"><label>Spoken output</label><input id="bSpeech" placeholder="e.g., Goldfish"></div></div>
+<div class="field"><label>Picture</label><input id="bImage" type="file" accept="image/*" capture="environment"><div class="hint">Choose a real photo from the device or take a photo. Images are stored in this board on this device.</div><div class="preview" id="preview">No photo</div></div>
+<div class="field"><label>Fallback symbol (optional)</label><input id="bEmoji" placeholder="e.g., 🍪"></div>
+<div class="actions"><button class="topbtn danger" id="deleteBtn">Clear Button</button><button class="topbtn" id="cancelBtn">Cancel</button><button class="topbtn primary" id="saveBtn">Save</button></div></div></div>
+<div class="modalWrap" id="settingsModal"><div class="modal"><h2>Board Settings</h2>
+<div class="field"><label>Board name</label><input id="sName"></div><div class="row"><div class="field"><label>Rows</label><select id="sRows"></select></div><div class="field"><label>Columns</label><select id="sCols"></select></div></div>
+<div class="hint">Examples: 2 × 2 = 4 buttons, 2 × 3 = 6, 3 × 3 = 9, 4 × 4 = 16, 5 × 5 = 25, 6 × 6 = 36.</div>
+<div class="actions"><button class="topbtn danger" id="deleteBoard">Delete Board</button><button class="topbtn" id="cancelSettings">Cancel</button><button class="topbtn primary" id="saveSettings">Save</button></div></div></div>
+<script>
+const KEY='speakeasy_aac_v2';
+const starter=[
+ {label:'More',speech:'more',emoji:'➕'},{label:'Go',speech:'go',emoji:'▶️'},{label:'Stop',speech:'stop',emoji:'🛑'},
+ {label:'Help',speech:'help',emoji:'🙋'},{label:'Break',speech:'break',emoji:'⏸️'},{label:'All Done',speech:'all done',emoji:'✅'},
+ {label:'Yes',speech:'yes',emoji:'👍'},{label:'No',speech:'no',emoji:'👎'},{label:'Want',speech:'want',emoji:'🤲'}];
+let state=load(); let editing=false, editIndex=null, pendingImage=null, message=[];
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x?.boards?.length)return x}catch(e){}return{current:0,boards:[{name:'3 × 3 Core',rows:3,cols:3,buttons:starter}]}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function board(){return state.boards[state.current]}
+function ensureSlots(b){let n=b.rows*b.cols;while(b.buttons.length<n)b.buttons.push({label:'',speech:'',emoji:'',image:''});if(b.buttons.length>n)b.buttons=b.buttons.slice(0,n)}
+function render(){let b=board();ensureSlots(b);document.getElementById('app').classList.toggle('editing',editing);let sel=document.getElementById('boardSelect');sel.innerHTML='';state.boards.forEach((x,i)=>{let o=document.createElement('option');o.value=i;o.textContent=x.name;sel.appendChild(o)});sel.value=state.current;let g=document.getElementById('grid');g.style.gridTemplateColumns=`repeat(${b.cols},minmax(0,1fr))`;g.style.gridTemplateRows=`repeat(${b.rows},minmax(90px,1fr))`;g.innerHTML='';b.buttons.forEach((x,i)=>{let bt=document.createElement('button');bt.className='aac'+(!x.label?' empty':'');let media=x.image?`<div class="pic"><img src="${x.image}" alt=""></div>`:(x.emoji?`<div class="pic"><div class="emoji">${esc(x.emoji)}</div></div>`:`<div class="pic"><div class="emoji">＋</div></div>`);bt.innerHTML=`<span class="editbadge">EDIT</span>${media}<div class="label">${esc(x.label||'Add button')}</div>`;bt.onclick=()=>editing?openButton(i):activate(x);g.appendChild(bt)});save()}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function activate(x){if(!x.label)return;let spoken=x.speech||x.label;say(spoken);message.push(spoken);updateMessage()}
+function say(t){if(!('speechSynthesis'in window))return alert('Speech is not supported in this browser.');speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.rate=.9;speechSynthesis.speak(u)}
+function updateMessage(){document.getElementById('messageText').textContent=message.length?message.join(' '):'Tap words to build a message…'}
+document.getElementById('editBtn').onclick=()=>{editing=!editing;document.getElementById('editBtn').textContent=editing?'Done Editing':'Staff / Edit';render()};
+document.getElementById('fullBtn').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()};
+document.getElementById('speakBtn').onclick=()=>message.length&&say(message.join(' '));document.getElementById('clearBtn').onclick=()=>{message=[];updateMessage()};document.getElementById('backBtn').onclick=()=>{message.pop();updateMessage()};
+document.getElementById('boardSelect').onchange=e=>{state.current=+e.target.value;render()};
+function openButton(i){editIndex=i;let x=board().buttons[i];bLabel.value=x.label||'';bSpeech.value=x.speech||'';bEmoji.value=x.emoji||'';pendingImage=x.image||'';showPreview();bImage.value='';buttonModal.style.display='flex'}
+function showPreview(){preview.innerHTML=pendingImage?`<img src="${pendingImage}" alt="preview">`:'No photo'}
+bImage.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>resizeImage(r.result,700,500,q=>{pendingImage=q;showPreview()});r.readAsDataURL(f)};
+function resizeImage(src,maxW,maxH,cb){let im=new Image();im.onload=()=>{let s=Math.min(1,maxW/im.width,maxH/im.height),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.78))};im.src=src}
+saveBtn.onclick=()=>{let x=board().buttons[editIndex];x.label=bLabel.value.trim();x.speech=bSpeech.value.trim()||x.label;x.emoji=bEmoji.value.trim();x.image=pendingImage;buttonModal.style.display='none';render()};
+deleteBtn.onclick=()=>{board().buttons[editIndex]={label:'',speech:'',emoji:'',image:''};buttonModal.style.display='none';render()};cancelBtn.onclick=()=>buttonModal.style.display='none';
+for(let i=1;i<=6;i++){sRows.add(new Option(i,i));sCols.add(new Option(i,i))}
+function openSettings(){let b=board();sName.value=b.name;sRows.value=b.rows;sCols.value=b.cols;deleteBoard.style.display=state.boards.length>1?'inline-flex':'none';settingsModal.style.display='flex'}
+boardSettings.onclick=openSettings;cancelSettings.onclick=()=>settingsModal.style.display='none';
+saveSettings.onclick=()=>{let b=board();b.name=sName.value.trim()||'AAC Board';b.rows=+sRows.value;b.cols=+sCols.value;ensureSlots(b);settingsModal.style.display='none';render()};
+newBoard.onclick=()=>{state.boards.push({name:'New Board',rows:2,cols:3,buttons:[]});state.current=state.boards.length-1;render();openSettings()};
+deleteBoard.onclick=()=>{if(state.boards.length<=1)return;if(confirm('Delete this board?')){state.boards.splice(state.current,1);state.current=0;settingsModal.style.display='none';render()}};
+exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='speakeasy-aac-boards.json';a.click();URL.revokeObjectURL(a.href)};
+importBtn.onclick=()=>importFile.click();importFile.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.boards?.length)throw 0;state=x;state.current=0;save();render();alert('Boards imported successfully.')}catch(_){alert('That file is not a valid SpeakEasy AAC board export.')}};r.readAsText(f)};
+window.onclick=e=>{if(e.target===buttonModal)buttonModal.style.display='none';if(e.target===settingsModal)settingsModal.style.display='none'};
+render();
+</script></body></html>
